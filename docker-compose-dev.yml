@@ -1,0 +1,46 @@
+services:
+  mcp-server:
+    container_name: opalus-mcp-server
+    networks:
+      - ai_ecosystem
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    # environment:
+    #   IDENTITY_TOKEN: ${IDENTITY_TOKEN}
+
+    ports:
+      - 8001:8001
+    volumes:
+      - .:/app
+
+  # Endpoint MCP nativo (streamable-http) para o Claude Code.
+  # Mesma imagem, sem mcpo: roda src/main.py com transporte HTTP em /mcp.
+  mcp-http:
+    container_name: opalus-mcp-http
+    networks:
+      - ai_ecosystem
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MCP_TRANSPORT=streamable-http
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8002
+      # Subdomínios extras de ctrl333.com liberados no DNS-rebinding (CSV).
+      # mcp.ctrl333.com já é default no código; adicione outros aqui.
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-}
+    command: ["python", "/app/src/main.py"]
+    ports:
+      - 8002:8002
+    volumes:
+      - .:/app
+
+networks:
+  ai_ecosystem:
+    external: true
